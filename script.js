@@ -1,7 +1,7 @@
-//your JS code here.
+const questionsElement = document.getElementById("questions");
+const submitButton = document.getElementById("submit");
+const scoreElement = document.getElementById("score");
 
-// Do not change code below this line
-// This code will just display the questions to the screen
 const questions = [
   {
     question: "What is the capital of France?",
@@ -30,27 +30,65 @@ const questions = [
   },
 ];
 
-// Display the quiz questions and choices
-function renderQuestions() {
-  for (let i = 0; i < questions.length; i++) {
-    const question = questions[i];
-    const questionElement = document.createElement("div");
-    const questionText = document.createTextNode(question.question);
-    questionElement.appendChild(questionText);
-    for (let j = 0; j < question.choices.length; j++) {
-      const choice = question.choices[j];
-      const choiceElement = document.createElement("input");
-      choiceElement.setAttribute("type", "radio");
-      choiceElement.setAttribute("name", `question-${i}`);
-      choiceElement.setAttribute("value", choice);
-      if (userAnswers[i] === choice) {
-        choiceElement.setAttribute("checked", true);
-      }
-      const choiceText = document.createTextNode(choice);
-      questionElement.appendChild(choiceElement);
-      questionElement.appendChild(choiceText);
-    }
-    questionsElement.appendChild(questionElement);
-  }
+// Load previously selected answers from session storage
+let userAnswers = JSON.parse(sessionStorage.getItem("progress")) || [];
+
+// Display score from localStorage if quiz was submitted previously
+const storedScore = localStorage.getItem("score");
+if (storedScore !== null) {
+  scoreElement.innerText = `Your score is ${storedScore} out of 5.`;
 }
+
+// Render questions with options and restore selections
+function renderQuestions() {
+  questionsElement.innerHTML = ""; // Clear any existing content
+  questions.forEach((q, i) => {
+    const questionDiv = document.createElement("div");
+
+    const questionTitle = document.createElement("p");
+    questionTitle.innerText = q.question;
+    questionDiv.appendChild(questionTitle);
+
+    q.choices.forEach(choice => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = `question-${i}`;
+      input.value = choice;
+
+      // Restore from sessionStorage
+      if (userAnswers[i] === choice) {
+        input.checked = true;
+      }
+
+      // Save to sessionStorage on selection
+      input.addEventListener("change", () => {
+        userAnswers[i] = choice;
+        sessionStorage.setItem("progress", JSON.stringify(userAnswers));
+      });
+
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(choice));
+      questionDiv.appendChild(label);
+      questionDiv.appendChild(document.createElement("br"));
+    });
+
+    questionsElement.appendChild(questionDiv);
+  });
+}
+
 renderQuestions();
+
+// Submit button handler
+submitButton.addEventListener("click", () => {
+  let score = 0;
+  questions.forEach((q, i) => {
+    if (userAnswers[i] === q.answer) {
+      score++;
+    }
+  });
+
+  // Display and store score
+  scoreElement.innerText = `Your score is ${score} out of 5.`;
+  localStorage.setItem("score", score.toString());
+});
